@@ -12,6 +12,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class RoundSubLogicImpl implements RoundSubLogic {
@@ -50,6 +51,15 @@ public class RoundSubLogicImpl implements RoundSubLogic {
                 cb.like(root.get("problemTags"), "%" + tag + "%");
     }
 
+    private static Specification<CodeforcesProblemEntity> hasContestId(Set<Integer> contestIds) {
+        return (root, query, cb) -> {
+            if (contestIds == null || contestIds.isEmpty()) {
+                return cb.disjunction();
+            }
+            return root.get("cfContestId").in(contestIds);
+        };
+    }
+
     @Override
     public RoundEntity saveUserRoundEntity(RoundEntity roundsEntity) {
         return roundDAO.save(roundsEntity);
@@ -63,5 +73,12 @@ public class RoundSubLogicImpl implements RoundSubLogic {
     @Override
     public List<RoundEntity> getUserRounds(Long userId) {
         return roundDAO.findAllByUserId(userId);
+    }
+
+    @Override
+    public List<CodeforcesProblemEntity> getProblemsByContestId(Set<Integer> contestId)
+    {
+        Specification<CodeforcesProblemEntity> specification = hasContestId(contestId);
+        return codeforcesProblemDAO.findAll(specification);
     }
 }

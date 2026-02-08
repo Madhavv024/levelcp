@@ -4,7 +4,6 @@ import com.jabardastcoder.jabardastcoder_backend.Config.UserContext;
 import com.jabardastcoder.jabardastcoder_backend.DTO.UserRoundDTO;
 import com.jabardastcoder.jabardastcoder_backend.Entity.*;
 import com.jabardastcoder.jabardastcoder_backend.DAO.LevelsDAO;
-import com.jabardastcoder.jabardastcoder_backend.DAO.RoundDAO;
 import com.jabardastcoder.jabardastcoder_backend.Service.RoundLogic;
 import com.jabardastcoder.jabardastcoder_backend.Service.UserLogic;
 import com.jabardastcoder.jabardastcoder_backend.Util.RoundStatus;
@@ -26,9 +25,6 @@ public class RoundLogicImpl implements RoundLogic {
 
     @Autowired
     UserLogic userLogic;
-
-    @Autowired
-    RoundDAO roundDAO;
 
     @Autowired
     LevelsDAO levelsDAO;

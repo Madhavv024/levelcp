@@ -1,6 +1,7 @@
 package com.jabardastcoder.jabardastcoder_backend.Service;
 
 
+import com.jabardastcoder.jabardastcoder_backend.DTO.ContestHistory;
 import com.jabardastcoder.jabardastcoder_backend.DTO.Request.JabardastRequest;
 import com.jabardastcoder.jabardastcoder_backend.DTO.Response.JabardastResponse;
 import com.jabardastcoder.jabardastcoder_backend.DTO.UserRoundDTO;
@@ -24,5 +25,9 @@ public interface UserLogic {
 
     Iterable<UserProblemMapEntity> getExistingProblem(Long id);
 
+    Integer getSuggestedUserLevel(Long userId);
+
     void saveUserProblems(List<UserProblemMapEntity> userProblemMapEntityLs);
+
+    List<ContestHistory> getUserContestHistory(Long userId);
 }

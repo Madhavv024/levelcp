@@ -1,6 +1,7 @@
 package com.jabardastcoder.jabardastcoder_backend.Controller;
 
 
+import com.jabardastcoder.jabardastcoder_backend.DTO.ContestHistory;
 import com.jabardastcoder.jabardastcoder_backend.DTO.Request.JabardastRequest;
 import com.jabardastcoder.jabardastcoder_backend.DTO.Response.JabardastResponse;
 import com.jabardastcoder.jabardastcoder_backend.DTO.UserRoundDTO;
@@ -33,6 +34,16 @@ public class JabardastController {
         return new ResponseEntity<>("Data Updated Successfully", HttpStatus.OK);
     }
 
-    // implement start round api
+    @GetMapping("getUserSuggestedLevel")
+    public Integer getUserSuggestedLevel(@RequestParam Long userId)
+    {
+        return userLogic.getSuggestedUserLevel(userId);
+    }
+
+    @GetMapping("getUserContestHistory")
+    public List<ContestHistory> getUserContestHistory(@RequestParam Long userId){
+        return userLogic.getUserContestHistory(userId);
+    }
+
 
 }

@@ -23,6 +23,9 @@ public class RoundEntity implements Serializable {
     @Column(name = "level_id")
     private Long levelId;
 
+    @Column(name = "topic")
+    private String topic;
+
     @Column(name = "start_time")
     private OffsetDateTime startTime;
 
@@ -122,5 +125,13 @@ public class RoundEntity implements Serializable {
 
     public void setUpdatedAt(OffsetDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(String topic) {
+        this.topic = topic;
     }
 }
