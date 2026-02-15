@@ -11,6 +11,7 @@ public class UserRoundDTO {
     private Long roundId;
     private String roundName;
     private Long levelId;
+     private Integer questionCount;
     private List<String> userProblems;
     private OffsetDateTime startTime;
 
@@ -74,5 +75,13 @@ public class UserRoundDTO {
     }
     public void setStartTime(OffsetDateTime startTime) {
         this.startTime = startTime;
+    }
+
+    public Integer getQuestionCount() {
+        return questionCount;
+    }
+
+    public void setQuestionCount(Integer questionCount) {
+        this.questionCount = questionCount;
     }
 }

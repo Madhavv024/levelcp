@@ -82,7 +82,7 @@ User
                                                     a : b
                             ));
                     List<CodeforcesProblemEntity> problemsForNewContest = new ArrayList<>();
-                    // get 4 problems 3 easy and 1 medium according to solve count
+                    // get N problems N-1 easy and 1 medium according to solve count
 
                     Integer totalSolveCount = codeforcesProblemEntityMap.values().stream()
                             .mapToInt(CodeforcesProblemEntity::getCfProblemSolvedCount).sum();
@@ -93,7 +93,7 @@ User
 
                     int counter = 1;
                     for(Map.Entry<String, CodeforcesProblemEntity> entry : codeforcesProblemEntityMap.entrySet()){
-                        if(counter < 4){
+                        if(counter < userRoundDTO.getQuestionCount()){
                             // add new problems
                             problemsForNewContest.add(entry.getValue());
                             counter++;
@@ -158,6 +158,8 @@ User
             RoundProblemMapEntity roundProblemMapEntity = new RoundProblemMapEntity();
             roundProblemMapEntity.setRoundId(problem.getId());
             roundProblemMapEntity.setProblemId(problem.getId().intValue());
+            roundProblemMapEntity.setActive(true);
+            roundProblemMapEntity.setCreatedAt(OffsetDateTime.now());
             roundProblemMapEntityLs.add(roundProblemMapEntity);
         });
         roundSubLogic.saveRoundProblemMap(roundProblemMapEntityLs);
@@ -170,6 +172,8 @@ User
             userProblemMapEntity.setUserId(userEntity.getId());
             userProblemMapEntity.setProblemId(problem.getId().intValue());
             userProblemMapEntity.setContestId(problem.getCfContestId());
+            userProblemMapEntity.setActive(true);
+            userProblemMapEntity.setUsedAt(OffsetDateTime.now());
             userProblemMapEntityLs.add(userProblemMapEntity);
         });
         userLogic.saveUserProblems(userProblemMapEntityLs);

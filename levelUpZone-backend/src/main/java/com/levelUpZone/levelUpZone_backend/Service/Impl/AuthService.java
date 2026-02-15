@@ -66,7 +66,7 @@ public class AuthService {
 
         String token = jwtUtil.generateToken(saved, "ACCESS");
 
-        return new LoginResponse(token);
+        return new LoginResponse(token, saved.getEmail(), saved.getId().intValue(), saved.getCodeforcesHandle());
     }
 
     public LoginResponse login(LoginRequest request) {
@@ -80,7 +80,7 @@ public class AuthService {
 
         String token = jwtUtil.generateToken(user, "ACCESS");
 
-        return new LoginResponse(token);
+        return new LoginResponse(token, user.getEmail(), user.getId().intValue(), user.getCodeforcesHandle());
     }
 
 
@@ -126,7 +126,7 @@ public class AuthService {
                 user.setCodeforcesHandle(request.getCfHandle());
                 userDAO.save(user);
                 String token = jwtUtil.generateToken(user, "REFRESH");
-                return new LoginResponse(token);
+                return new LoginResponse(token, user.getEmail(), user.getId().intValue(), user.getCodeforcesHandle());
             } catch (HttpServerErrorException e) {
                 throw new RuntimeException(e);
             }
