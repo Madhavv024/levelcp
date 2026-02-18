@@ -8,4 +8,6 @@ public interface RoundLogic {
     UserRoundDTO createRound(UserRoundDTO userRoundDTO);
 
     List<UserRoundDTO> getPreviousRound(Long userId);
+
+    String getRerollProblem(Long userId, Long levelId);
 }

@@ -31,4 +31,10 @@ public class RoundController {
     public List<UserRoundDTO> getPreviousRound(@RequestParam("userId") Long userId){
         return roundLogic.getPreviousRound(userId);
     }
+
+    @GetMapping("getRerollProblem")
+    public String getRerollProblem(@RequestParam("userId") Long userId, @RequestParam("levelId") Long  levelId){
+        return roundLogic.getRerollProblem(userId, levelId);
+    }
+
 }

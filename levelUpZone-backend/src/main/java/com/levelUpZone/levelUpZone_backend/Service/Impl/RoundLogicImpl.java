@@ -1,6 +1,5 @@
 package com.levelUpZone.levelUpZone_backend.Service.Impl;
 
-import com.levelUpZone.levelUpZone_backend.Config.UserContext;
 import com.levelUpZone.levelUpZone_backend.DTO.UserRoundDTO;
 import com.levelUpZone.levelUpZone_backend.DAO.LevelsDAO;
 import com.levelUpZone.levelUpZone_backend.Entity.*;
@@ -81,7 +80,7 @@ User
                                             a.getCfProblemSolvedCount() >= b.getCfProblemSolvedCount() ?
                                                     a : b
                             ));
-                    List<CodeforcesProblemEntity> problemsForNewContest = new ArrayList<>();
+                    List<CodeforcesProblemEntity> problemsForNewContest = getProblems(levelId, userEntity, userRoundDTO.getQuestionCount() - 1); //new ArrayList<>();
                     // get N problems N-1 easy and 1 medium according to solve count
 
                     Integer totalSolveCount = codeforcesProblemEntityMap.values().stream()
@@ -91,16 +90,20 @@ User
 
                     int averageSolve =  totalSolveCount / totalProblems;
 
-                    int counter = 1;
+                    /*int counter = 1;
                     for(Map.Entry<String, CodeforcesProblemEntity> entry : codeforcesProblemEntityMap.entrySet()){
                         if(counter < userRoundDTO.getQuestionCount()){
                             // add new problems
                             problemsForNewContest.add(entry.getValue());
+                            codeforcesProblemEntityMap.remove(entry.getKey());
                             counter++;
                             continue;
                         }
                         break;
-                    }
+                    }*/
+
+                    codeforcesProblemEntityMap.values().removeAll(problemsForNewContest);
+
                     // search for problem nearing to average solve count
 
                     List<CodeforcesProblemEntity> sortedProblemsForNewContest = new ArrayList<>(codeforcesProblemEntityMap.values());
@@ -166,7 +169,10 @@ User
 
 
         // create user problem map
-        List<UserProblemMapEntity>  userProblemMapEntityLs = new ArrayList<>();
+
+        saveUserProblem(problemsForNewContest, userEntity);
+
+        /*List<UserProblemMapEntity>  userProblemMapEntityLs = new ArrayList<>();
         problemsForNewContest.forEach(problem -> {
             UserProblemMapEntity userProblemMapEntity = new UserProblemMapEntity();
             userProblemMapEntity.setUserId(userEntity.getId());
@@ -176,7 +182,7 @@ User
             userProblemMapEntity.setUsedAt(OffsetDateTime.now());
             userProblemMapEntityLs.add(userProblemMapEntity);
         });
-        userLogic.saveUserProblems(userProblemMapEntityLs);
+        userLogic.saveUserProblems(userProblemMapEntityLs);*/
 
         return userRoundDTO;
     }
@@ -213,4 +219,68 @@ User
         });
         return userRoundDTOList;
     }
+
+    @Override
+    public String getRerollProblem(Long userId, Long levelId){
+        Optional<UserEntity> userEntity = userLogic.checkUserExist(userId);
+        if(userEntity.isPresent()){
+            List<CodeforcesProblemEntity> newProblems = getProblems(levelId.intValue(), userEntity.get(), 1);
+            saveUserProblem(newProblems, userEntity.get());
+            String cfProblem = buildCodeforcesProblemLink(newProblems.get(0));
+            return cfProblem;
+        }
+        return null;
+    }
+
+    private void saveUserProblem(List<CodeforcesProblemEntity> newProblems, UserEntity userEntity) {
+        // create user problem map
+        List<UserProblemMapEntity>  userProblemMapEntityLs = new ArrayList<>();
+        newProblems.forEach(problem -> {
+            UserProblemMapEntity userProblemMapEntity = new UserProblemMapEntity();
+            userProblemMapEntity.setUserId(userEntity.getId());
+            userProblemMapEntity.setProblemId(problem.getId().intValue());
+            userProblemMapEntity.setContestId(problem.getCfContestId());
+            userProblemMapEntity.setActive(true);
+            userProblemMapEntity.setUsedAt(OffsetDateTime.now());
+            userProblemMapEntityLs.add(userProblemMapEntity);
+        });
+        userLogic.saveUserProblems(userProblemMapEntityLs);
+    }
+
+    public List<CodeforcesProblemEntity> getProblems(Integer levelId, UserEntity userEntity, Integer problemCount){
+        Optional<LevelsEntity> levelsEntityOp = levelsDAO.findByLevelNumber(levelId);
+        Integer minRating = levelsEntityOp.get().getMinRating(),
+                maxRating = levelsEntityOp.get().getMaxRating();
+        // fetch the problems in range of rating
+        Iterable<CodeforcesProblemEntity> cfProblems = roundSubLogic.getContestProblems(minRating, maxRating);
+        // fetch and filter the problems which are already mapped with user to avoid that
+        Iterable<UserProblemMapEntity> userProblemMapEntities = userLogic.getExistingProblem(userEntity.getId());
+        Set<String> userExistingProblems = StreamSupport.stream(userProblemMapEntities.spliterator(), false)
+                .map( ent ->
+                        {
+                            return ent.getContestId().toString() + "~" + ent.getProblemId();
+                        }
+                ).collect(Collectors.toSet());
+
+        Map<String, CodeforcesProblemEntity> codeforcesProblemEntityMap = StreamSupport.stream(cfProblems.spliterator(), false)
+                .filter(ent -> !userExistingProblems.contains(ent.getCfContestId()+"~"+ent.getId()))
+                .collect(Collectors.toMap(
+                        ent -> {
+                            String key = ent.getCfContestId() + "~" + ent.getCfProblemId();
+                            return key;
+                        }, Function.identity()));
+
+        List<CodeforcesProblemEntity> allProblems = new ArrayList<>(codeforcesProblemEntityMap.values());
+
+        Random random = new Random();
+
+        List<CodeforcesProblemEntity> problemsForNewContest = random.ints(0, allProblems.size())
+                        .distinct()
+                        .limit(Math.min(problemCount, allProblems.size()))
+                        .mapToObj(allProblems::get)
+                        .collect(Collectors.toList());
+
+        return problemsForNewContest;
+    }
+
 }
