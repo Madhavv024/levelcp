@@ -30,6 +30,9 @@ public class UserProblemMapEntity implements Serializable {
     @Column(name = "used_at")
     private OffsetDateTime usedAt;
 
+    @Column(name = "solved_at")
+    private OffsetDateTime solvedAt;
+
     @Column(name = "active")
     private Boolean active;
 
@@ -79,5 +82,13 @@ public class UserProblemMapEntity implements Serializable {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public OffsetDateTime getSolvedAt() {
+        return solvedAt;
+    }
+
+    public void setSolvedAt(OffsetDateTime solvedAt) {
+        this.solvedAt = solvedAt;
     }
 }

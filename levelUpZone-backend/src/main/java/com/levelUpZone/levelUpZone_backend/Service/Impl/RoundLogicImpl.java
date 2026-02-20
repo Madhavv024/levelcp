@@ -1,5 +1,6 @@
 package com.levelUpZone.levelUpZone_backend.Service.Impl;
 
+import com.levelUpZone.levelUpZone_backend.DTO.ProblemDTO;
 import com.levelUpZone.levelUpZone_backend.DTO.UserRoundDTO;
 import com.levelUpZone.levelUpZone_backend.DAO.LevelsDAO;
 import com.levelUpZone.levelUpZone_backend.Entity.*;
@@ -207,6 +208,11 @@ User
         return codeforcesProblemEntity;
     }
 
+
+    public void saveUserProblem(Long userId, ProblemDTO problemDTO){
+
+    }
+
     @Override
     public List<UserRoundDTO> getPreviousRound(Long userId) {
         List<UserRoundDTO> userRoundDTOList = new ArrayList<>();
@@ -247,10 +253,10 @@ User
         userLogic.saveUserProblems(userProblemMapEntityLs);
     }
 
-    public List<CodeforcesProblemEntity> getProblems(Integer levelId, UserEntity userEntity, Integer problemCount){
+    /*public List<CodeforcesProblemEntity> getProblems(Integer levelId, UserEntity userEntity, Integer problemCount){
         Optional<LevelsEntity> levelsEntityOp = levelsDAO.findByLevelNumber(levelId);
-        Integer minRating = levelsEntityOp.get().getMinRating(),
-                maxRating = levelsEntityOp.get().getMaxRating();
+        Integer minRating = levelsEntityOp.get().getMinRating() - 50,
+                maxRating = levelsEntityOp.get().getMaxRating() + 120;
         // fetch the problems in range of rating
         Iterable<CodeforcesProblemEntity> cfProblems = roundSubLogic.getContestProblems(minRating, maxRating);
         // fetch and filter the problems which are already mapped with user to avoid that
@@ -281,6 +287,129 @@ User
                         .collect(Collectors.toList());
 
         return problemsForNewContest;
+    }*/
+
+    private void addProblems(List<CodeforcesProblemEntity> result, List<CodeforcesProblemEntity> source, int count) {
+
+        int limit = Math.min(count, source.size());
+
+        for (int i = 0; i < limit; i++) {
+            result.add(source.get(i));
+        }
+    }
+
+    public List<CodeforcesProblemEntity> getProblems(Integer levelId, UserEntity userEntity, Integer problemCount) {
+
+        Optional<LevelsEntity> levelsEntityOp = levelsDAO.findByLevelNumber(levelId);
+        if (!levelsEntityOp.isPresent()) {
+            return Collections.emptyList();
+        }
+
+        Integer userRating = userEntity.getCurrentRating();
+
+        int warmupMin = userRating - 50;
+        int warmupMax = userRating;
+
+        int growthMin = userRating;
+        int growthMax = userRating + 80;
+
+        int stretchMin = userRating + 80;
+        int stretchMax = userRating + 120;
+
+        Iterable<CodeforcesProblemEntity> cfProblems = roundSubLogic.getContestProblems(warmupMin, stretchMax);
+
+        Set<String> userExistingProblems = StreamSupport.stream(
+                                userLogic.getExistingProblem(userEntity.getId()).spliterator(), false)
+                        .map(ent -> ent.getContestId() + "~" + ent.getProblemId())
+                        .collect(Collectors.toSet());
+
+        List<CodeforcesProblemEntity> filteredProblems = StreamSupport.stream(cfProblems.spliterator(), false)
+                        .filter(ent ->
+                                !userExistingProblems.contains(
+                                        ent.getCfContestId() + "~" + ent.getCfProblemId()))
+                        .collect(Collectors.toList());
+
+        // -------- Split into buckets --------
+
+        List<CodeforcesProblemEntity> warmup = new ArrayList<>();
+        List<CodeforcesProblemEntity> growth = new ArrayList<>();
+        List<CodeforcesProblemEntity> stretch = new ArrayList<>();
+
+        for (CodeforcesProblemEntity problem : filteredProblems) {
+            int rating = problem.getProblemRating();
+
+            if (rating >= warmupMin && rating <= warmupMax) {
+                warmup.add(problem);
+            } else if (rating > growthMin && rating <= growthMax) {
+                growth.add(problem);
+            } else if (rating > stretchMin && rating <= stretchMax) {
+                stretch.add(problem);
+            }
+        }
+
+        Collections.shuffle(warmup);
+        Collections.shuffle(growth);
+        Collections.shuffle(stretch);
+
+        int warmupTarget = (int) Math.ceil(problemCount * 0.3);
+        int stretchTarget = (int) Math.ceil(problemCount * 0.2);
+        int growthTarget = problemCount - warmupTarget - stretchTarget;
+
+        List<CodeforcesProblemEntity> result = new ArrayList<>();
+
+        // -------- Primary Allocation --------
+
+        addProblems(result, warmup, warmupTarget);
+        addProblems(result, growth, growthTarget);
+        addProblems(result, stretch, stretchTarget);
+
+        // -------- Fallback Logic --------
+        int remaining = problemCount - result.size();
+
+        if (remaining > 0) {
+            List<CodeforcesProblemEntity> fallbackPool = new ArrayList<>();
+
+            fallbackPool.addAll(growth);
+            fallbackPool.addAll(warmup);
+            fallbackPool.addAll(stretch);
+
+            fallbackPool.removeAll(result);
+            Collections.shuffle(fallbackPool);
+
+            addProblems(result, fallbackPool, remaining);
+        }
+
+        Collections.shuffle(result);
+
+        return result;
+    }
+
+    //make delta logic to calculate rating change just like codeforces, but delta should be how early a user solves the problem
+
+    /* ------------- Delta Logic --------------
+     * for Each problem user is solving,
+     * we define 3 variables, problem rating (R) , time taken to solve the problem (t1), contest duration(tmax)
+     * Solved problem ( S -> ( 0 , 1) ), User Rating (Ur)
+     * -------------------------------------------------------------
+     * Formula --
+     *  probability P = 1 / 1 + 10 ^ ( ( R - Ur )/ 400)
+     * more the problem rating than user, More the reward (Delta) and vice versa
+     *
+     * Difficulty D = 1 - P ( This will be different for every problem)
+     *  Speed factor  Sp = 1 - ( T1 / Tmax )
+     *  Score for each problem ->   Score(p)  = S * R * D * Sp
+     *  Total perfomance = F = Sum of all the scores
+     *
+     *  Delta =>
+     *          MaxPerformace = Sum of all the rating of the problems
+     *          Normalised Performance = F / MaxPerf
+     *      Delta = K * ( NP - 0.5 ) ----> K = 200,
+     *
+     * Final Rating update = New Rating of user = Old rating of user + Delta
+     * */
+
+    public Integer getTotalDeltaRatingChange(Integer userId, List<CodeforcesProblemEntity> cfProblems){
+        return 0;
     }
 
 }

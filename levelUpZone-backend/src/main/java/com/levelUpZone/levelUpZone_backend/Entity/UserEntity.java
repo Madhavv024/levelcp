@@ -21,6 +21,9 @@ public class UserEntity {
     @Column(name = "current_level_id")
     private Integer currentLevelId;
 
+    @Column(name = "current_rating")
+    private Integer currentRating;
+
     @Column(nullable = false, unique = true)
     private String email;
 
@@ -124,5 +127,13 @@ public class UserEntity {
 
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    public Integer getCurrentRating() {
+        return currentRating;
+    }
+
+    public void setCurrentRating(Integer currentRating) {
+        this.currentRating = currentRating;
     }
 }
