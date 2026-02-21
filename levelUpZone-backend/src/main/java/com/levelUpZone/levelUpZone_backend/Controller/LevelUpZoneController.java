@@ -2,8 +2,10 @@ package com.levelUpZone.levelUpZone_backend.Controller;
 
 
 import com.levelUpZone.levelUpZone_backend.DTO.ContestHistory;
+import com.levelUpZone.levelUpZone_backend.DTO.Levels;
 import com.levelUpZone.levelUpZone_backend.DTO.Request.JabardastRequest;
 import com.levelUpZone.levelUpZone_backend.DTO.Response.LevelUpZoneResponse;
+import com.levelUpZone.levelUpZone_backend.Service.RoundLogic;
 import com.levelUpZone.levelUpZone_backend.Service.UserLogic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,9 @@ public class LevelUpZoneController {
 
     @Autowired
     UserLogic userLogic;
+
+    @Autowired
+    RoundLogic roundLogic;
 
 
     @GetMapping("getAllUsers")
@@ -47,6 +52,11 @@ public class LevelUpZoneController {
     @GetMapping("details")
     public LevelUpZoneResponse details(){
         return userLogic.getUserDetails();
+    }
+
+    @GetMapping("levels")
+    public List<String> levels(){
+        return List.of("level1",  "level2", "level3", "level4", "level5");
     }
 
 

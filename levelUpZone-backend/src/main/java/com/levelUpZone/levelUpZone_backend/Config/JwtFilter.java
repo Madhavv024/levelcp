@@ -36,7 +36,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
             String token = authHeader.substring(7);
 
-            if (jwtUtil.isTokenValid(token)) {
+            if (jwtUtil.isTokenValid(token , "ACCESS")) {
 
                 Claims claims = jwtUtil.extractClaims(token);
 

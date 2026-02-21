@@ -16,15 +16,21 @@ import java.util.Date;
 public class JwtUtil {
 
     private static final String SECRET = "jabardastcoder-secret-key-very-long";
-    private static final long EXPIRATION = 1000 * 60 * 60;
+    private static final long ACCESS_EXPIRATION = 1000 * 60 * 15;   // 15 minutes
+    private static final long REFRESH_EXPIRATION = 1000 * 60 * 60 * 24;  // 1 day
 
     public String generateToken(UserEntity user, String tokenType) {
+
+        long expirationTime = tokenType.equalsIgnoreCase("refresh")
+                ? REFRESH_EXPIRATION
+                : ACCESS_EXPIRATION;
+
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("userId", user.getId())
                 .claim("type", tokenType)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(Keys.hmacShaKeyFor(SECRET.getBytes()), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -33,10 +39,20 @@ public class JwtUtil {
         return getClaims(token).getSubject();
     }
 
-    public boolean isTokenValid(String token) {
+    public boolean isTokenValid(String token, String expectedType) {
         try {
-            getClaims(token);
-            return true;
+            Claims claims = getClaims(token);
+
+            // Check expiration
+            Date expiration = claims.getExpiration();
+            if (expiration.before(new Date())) {
+                return false;
+            }
+
+            // Check token type
+            String type = claims.get("type", String.class);
+            return expectedType.equals(type);
+
         } catch (Exception e) {
             return false;
         }

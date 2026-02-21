@@ -11,9 +11,12 @@ import com.levelUpZone.levelUpZone_backend.DAO.UserDAO;
 import com.levelUpZone.levelUpZone_backend.Exception.ResourceNotFoundException;
 import com.levelUpZone.levelUpZone_backend.Exception.UnauthorizedException;
 import com.levelUpZone.levelUpZone_backend.Util.CFUtility;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -48,7 +51,7 @@ public class AuthService {
         this.userDAO = userDAO;
     }
 
-    public LoginResponse register(LoginRequest request) {
+    public LoginResponse register(LoginRequest request , HttpServletResponse response) {
 
         if (userDAO.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already in use");
@@ -65,11 +68,23 @@ public class AuthService {
         UserEntity saved = userDAO.save(user);
 
         String token = jwtUtil.generateToken(saved, "ACCESS");
+        String refreshToken = jwtUtil.generateToken(saved, "REFRESH");
+
+        // Set refresh token in HttpOnly cookie
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(false)        // true in production (HTTPS)
+                .path("/")
+                .sameSite("Lax")      // works for localhost cross-port
+                .maxAge(3 * 24 * 60 * 60) // 3 days
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
         return new LoginResponse(token, saved.getEmail(), saved.getId().intValue(), saved.getCodeforcesHandle());
     }
 
-    public LoginResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request, HttpServletResponse response) {
 
         UserEntity user = userDAO.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -79,6 +94,19 @@ public class AuthService {
         }
 
         String token = jwtUtil.generateToken(user, "ACCESS");
+        String refreshToken = jwtUtil.generateToken(user, "REFRESH");
+
+        // 🔥 Set refresh token in HttpOnly cookie
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(false)      // true in production (HTTPS)
+                .path("/")
+                .sameSite("Lax")    // Lax works for localhost cross-port
+                .maxAge(7 * 24 * 60 * 60) // 7 days
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
 
         return new LoginResponse(token, user.getEmail(), user.getId().intValue(), user.getCodeforcesHandle());
     }
@@ -133,18 +161,33 @@ public class AuthService {
         }
     }
 
-    public ResponseEntity<?> createRefreshToken(String refreshToken) {
-        if (refreshToken == null || !jwtUtil.isTokenValid(refreshToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
+    public ResponseEntity<?> createRefreshToken(String refreshToken, HttpServletResponse response) {
+        if (refreshToken == null || !jwtUtil.isTokenValid(refreshToken , "REFRESH")) {
+            clearRefreshTokenCookie(response);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh token invalid or expired. Please login again.");
         }
 
         String username = jwtUtil.getEmailFromToken(refreshToken);
-        UserEntity user = userDAO.findByEmail(username).get();
+        UserEntity user = userDAO.findByEmail(username).orElse(null);
+
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+            clearRefreshTokenCookie(response);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found. Please login again.");
         }
 
-        String newAccessToken = jwtUtil.generateToken(user, "REFRESH");
+        String newAccessToken = jwtUtil.generateToken(user, "ACCESS");
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
     }
+
+    public void clearRefreshTokenCookie(HttpServletResponse response) {
+        ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(false) // true in production
+                .path("/")
+                .maxAge(0) // delete immediately
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+    }
+
 }
