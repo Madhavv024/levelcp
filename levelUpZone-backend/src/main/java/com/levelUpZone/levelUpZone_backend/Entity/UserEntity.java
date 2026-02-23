@@ -24,6 +24,9 @@ public class UserEntity {
     @Column(name = "current_rating")
     private Integer currentRating;
 
+    @Column(name = "provider")
+    private String provider;
+
     @Column(nullable = false, unique = true)
     private String email;
 
@@ -135,5 +138,13 @@ public class UserEntity {
 
     public void setCurrentRating(Integer currentRating) {
         this.currentRating = currentRating;
+    }
+
+    public String getProvider() {
+        return provider;
+    }
+
+    public void setProvider(String provider) {
+        this.provider = provider;
     }
 }
