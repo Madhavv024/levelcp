@@ -1,23 +1,6 @@
 spring:
   application:
     name: LevelUpZoneBackend
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
-            scope:
-              - openid
-              - profile
-              - email
-        provider:
-          google:
-            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
-            token-uri: https://oauth2.googleapis.com/token
-            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
-            user-name-attribute: sub
 #  profiles:
 #    active: dev
 
@@ -44,5 +27,14 @@ spring:
 #      hibernate:
 #        format_sql: true
 
-
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 805687537362-d4ht30jd5ab0ll89ue98g0kui3bkhnk4.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - email
+              - profile
 cfURL: https://codeforces.com/api/

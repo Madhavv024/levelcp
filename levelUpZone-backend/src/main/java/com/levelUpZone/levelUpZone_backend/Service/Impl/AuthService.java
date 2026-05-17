@@ -63,6 +63,7 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setActive(true);
         user.setVersion(1);
+        user.setProvider("form");
         user.setCreatedAt(OffsetDateTime.now());
 
         UserEntity saved = userDAO.save(user);

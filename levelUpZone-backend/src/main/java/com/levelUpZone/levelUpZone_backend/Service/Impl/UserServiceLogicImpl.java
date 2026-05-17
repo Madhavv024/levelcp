@@ -3,6 +3,7 @@ package com.levelUpZone.levelUpZone_backend.Service.Impl;
 import com.levelUpZone.levelUpZone_backend.Config.UserContext;
 import com.levelUpZone.levelUpZone_backend.DAO.*;
 import com.levelUpZone.levelUpZone_backend.DTO.ContestHistory;
+import com.levelUpZone.levelUpZone_backend.DTO.Levels;
 import com.levelUpZone.levelUpZone_backend.DTO.ProblemDTO;
 import com.levelUpZone.levelUpZone_backend.DTO.Request.JabardastRequest;
 import com.levelUpZone.levelUpZone_backend.DTO.Response.LevelUpZoneResponse;
@@ -46,6 +47,9 @@ public class UserServiceLogicImpl implements UserLogic {
 
     @Autowired
     RoundSubLogic roundSubLogic;
+
+    @Autowired
+    LevelsDAO levelsDAO;
 
     @Override
     public Optional<UserEntity> checkUserExist(String email){
@@ -189,5 +193,20 @@ public class UserServiceLogicImpl implements UserLogic {
         }else{
             throw new ResourceNotFoundException("Invalid Bearer Token");
         }
+    }
+
+    @Override
+    public List<Levels> getAllLevels() {
+        List<LevelsEntity> levelsEntities = levelsDAO.findAll();
+        List<Levels> levels = new ArrayList<>();
+        levelsEntities.forEach(levelsEntity -> {
+            Levels level = new Levels();
+            level.setId(levelsEntity.getId().intValue());
+            level.setMinRating(levelsEntity.getMinRating());
+            level.setMaxRating(levelsEntity.getMaxRating());
+            level.setDescription(levelsEntity.getDescription());
+            levels.add(level);
+        });
+        return levels;
     }
 }

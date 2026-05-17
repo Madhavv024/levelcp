@@ -3,6 +3,7 @@ package com.levelUpZone.levelUpZone_backend.Config;
 import com.levelUpZone.levelUpZone_backend.DAO.UserDAO;
 import com.levelUpZone.levelUpZone_backend.Exception.CustomAccessDeniedHandler;
 import com.levelUpZone.levelUpZone_backend.Exception.CustomAuthenticationEntryPoint;
+import com.levelUpZone.levelUpZone_backend.Security.OAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -22,7 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private JwtFilter jwtFilter;
+    private final JwtFilter jwtFilter;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     private final UserDAO userDAO;
@@ -45,9 +46,12 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/register",
+                        .requestMatchers(
+                                "/api/auth/register",
                                 "/api/auth/login",
-                                "/api/auth/refresh", "/oauth2/**"
+                                "/api/auth/refresh",
+                                "/oauth2/**",
+                                "/login/oauth2/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 ).formLogin(form -> form.disable())

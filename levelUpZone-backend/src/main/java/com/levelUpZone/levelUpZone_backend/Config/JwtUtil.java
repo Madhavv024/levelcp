@@ -51,7 +51,7 @@ public class JwtUtil {
 
             // Check token type
             String type = claims.get("type", String.class);
-            return expectedType.equals(type);
+            return expectedType.equalsIgnoreCase(type);
 
         } catch (Exception e) {
             return false;

@@ -2,6 +2,7 @@ package com.levelUpZone.levelUpZone_backend.Service;
 
 
 import com.levelUpZone.levelUpZone_backend.DTO.ContestHistory;
+import com.levelUpZone.levelUpZone_backend.DTO.Levels;
 import com.levelUpZone.levelUpZone_backend.DTO.Request.JabardastRequest;
 import com.levelUpZone.levelUpZone_backend.DTO.Response.LevelUpZoneResponse;
 import com.levelUpZone.levelUpZone_backend.Entity.UserEntity;
@@ -31,4 +32,6 @@ public interface UserLogic {
     List<ContestHistory> getUserContestHistory(Long userId);
 
     LevelUpZoneResponse getUserDetails();
+
+    List<Levels> getAllLevels();
 }

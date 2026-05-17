@@ -112,8 +112,9 @@ User
                     sortedProblemsForNewContest.sort(Comparator.comparing(CodeforcesProblemEntity::getCfProblemSolvedCount));
                     CodeforcesProblemEntity averageSolveCountProblem = findAverageSolveCountProblem(sortedProblemsForNewContest, averageSolve);
                     problemsForNewContest.add(averageSolveCountProblem);
+
                     // create user round map, user problem map, and return user round dto with start time.
-                    userRoundDTO = createUserRound(userEntity , problemsForNewContest, levelId);
+                    //userRoundDTO = createUserRound(userEntity , problemsForNewContest, levelId);
 
                     List<String> problemLinks = new ArrayList<>();
                     problemsForNewContest.forEach(problem -> {

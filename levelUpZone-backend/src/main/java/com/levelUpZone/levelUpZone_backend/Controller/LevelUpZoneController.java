@@ -55,8 +55,8 @@ public class LevelUpZoneController {
     }
 
     @GetMapping("levels")
-    public List<String> levels(){
-        return List.of("level1",  "level2", "level3", "level4", "level5");
+    public List<Levels> levels(){
+        return userLogic.getAllLevels();
     }
 
 
