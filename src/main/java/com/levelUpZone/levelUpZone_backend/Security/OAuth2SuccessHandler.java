@@ -6,6 +6,7 @@ import com.levelUpZone.levelUpZone_backend.Entity.UserEntity;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -20,6 +21,8 @@ import java.time.OffsetDateTime;
 @Component
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     private final JwtUtil jwtUtil;
     private final UserDAO userDAO;
@@ -79,7 +82,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
 // Redirect ONLY with access token
         response.sendRedirect(
-                "http://localhost:5173/oauth-success?access=" + accessToken
+                frontendUrl+"/oauth-success?access=" + accessToken
         );
     }
 }
